@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meridian — Travel Atelier</title>
+<meta name="description" content="Meridian is a travel atelier for the slow ones. Curated destinations, featured stays, itineraries, and long-form field notes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#0d0d0c',
+          paper: '#faf9f7',
+          surface: '#ffffff',
+          muted: '#5f5a54',
+          faint: '#8a847d',
+          clay: '#a9552c',
+          signal: '#2f7d4f',
+          line: 'rgba(13,13,12,0.12)',
+          'line-strong': 'rgba(13,13,12,0.22)'
+        },
+        fontFamily: {
+          serif: ['"Playfair Display"', 'Georgia', 'serif'],
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif']
+        },
+        borderRadius: {
+          DEFAULT: '2px', sm: '2px', md: '2px', lg: '2px', xl: '2px', '2xl': '2px', '3xl': '2px'
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background-color: #faf9f7;
+    color: #0d0d0c;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection { background: #a9552c; color: #faf9f7; }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #faf9f7; }
+  ::-webkit-scrollbar-thumb { background: #d6d2cb; border: 2px solid #faf9f7; }
+  ::-webkit-scrollbar-thumb:hover { background: #bdb8b0; }
+
+  /* Subtle blueprint grid for the hero */
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(13,13,12,.055) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(13,13,12,.055) 1px, transparent 1px);
+    background-size: 72px 72px;
+  }
+
+  /* Scroll reveal */
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1);
+    will-change: opacity, transform;
+  }
+  .reveal.is-in { opacity: 1; transform: translateY(0); }
+
+  /* Hero word clip-reveal */
+  @keyframes wordUp {
+    from { transform: translateY(112%); }
+    to   { transform: translateY(0); }
+  }
+  .hero-word {
+    display: block;
+    transform: translateY(112%);
+    animation: wordUp 1.15s cubic-bezier(.16,1,.3,1) both;
+    will-change: transform;
+  }
+
+  /* Rotating badge */
+  @keyframes spinSlow { to { transform: rotate(360deg); } }
+  .spin-slow { animation: spinSlow 24s linear infinite; transform-origin: 50% 50%; }
+
+  /* Marquee */
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .marquee-track { animation: marquee 38s linear infinite; will-change: transform; }
+  .marquee:hover .marquee-track { animation-play-state: paused; }
+
+  /* Parallax images */
+  .img-parallax {
+    transform: scale(1.06);
+    transition: transform .9s cubic-bezier(.16,1,.3,1);
+    will-change: transform;
+  }
+
+  /* Nav underline draw */
+  .nav-link { position: relative; padding-bottom: 3px; }
+  .nav-link::after {
+    content: ''; position: absolute; left: 0; bottom: 0; height: 1px; width: 100%;
+    background: #a9552c; transform: scaleX(0); transform-origin: left;
+    transition: transform .45s cubic-bezier(.16,1,.3,1);
+  }
+  .nav-link:hover::after { transform: scaleX(1); }
+
+  /* Selects */
+  select { -webkit-appearance: none; appearance: none; background: transparent; border: 0; outline: 0; }
+  select option { background: #ffffff; color: #0d0d0c; }
+
+  /* Day accordion */
+  .day-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .45s cubic-bezier(.4,0,.2,1);
+  }
+  .day.open .day-body { grid-template-rows: 1fr; }
+  .day .chev { transition: transform .45s cubic-bezier(.4,0,.2,1); }
+  .day.open .chev { transform: rotate(45deg); }
+
+  /* Tabs */
+  .tab-btn { color: #5f5a54; transition: background-color .35s ease, color .35s ease; }
+  .tab-btn:hover { color: #0d0d0c; }
+  .tab-btn.is-active { background-color: #0d0d0c; color: #faf9f7; }
+  .tab-btn.is-active:hover { color: #faf9f7; }
+
+  /* Mobile menu */
+  #mobileMenu {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .45s cubic-bezier(.4,0,.2,1);
+  }
+  #mobileMenu.open { grid-template-rows: 1fr; }
+
+  /* Toast */
+  #toast {
+    opacity: 0; transform: translateY(14px); pointer-events: none;
+    transition: opacity .4s ease, transform .4s cubic-bezier(.16,1,.3,1);
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Header scroll state */
+  #headerBar { transition: background-color .5s ease, box-shadow .5s ease; }
+  body.scrolled #headerBar { background-color: rgba(250,249,247,.96); box-shadow: 0 1px 0 rgba(13,13,12,.08); }
+
+  section[id] { scroll-margin-top: 110px; }
+
+  /* Image placeholder + graceful fallback */
+  .img-frame { background-color: #e9e6e1; }
+  .img-fallback { background-image: linear-gradient(135deg, #e9e6e1 0%, #d6d2cb 100%); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+    .hero-word { animation: none !important; transform: none !important; }
+    .spin-slow, .marquee-track { animation: none !important; }
+    * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+
+<body class="bg-paper font-sans text-ink antialiased overflow-x-hidden">
+
+<!-- ══════════════════════════════════════════ HEADER ══════════════════════════════════════════ -->
+<header class="fixed inset-x-0 top-0 z-50">
+  <div class="mx-auto max-w-[1400px] px-4 sm:px-6">
+
+    <div id="headerBar"
+         class="mt-4 flex h-14 items-center justify-between border border-line bg-paper/75 px-4 backdrop-blur-xl sm:h-16 sm:px-6">
+
+      <a href="#top" class="group flex shrink-0 items-center gap-2.5" aria-label="Meridian home">
+        <span class="block h-2.5 w-2.5 bg-signal transition-transform duration-500 group-hover:rotate-45"></span>
+        <span class="font-serif text-lg tracking-tight text-ink">Meridian<span class="text-clay">.</span></span>
+      </a>
+
+      <nav class="hidden items-center gap-9 text-[10px] uppercase tracking-[0.22em] text-muted md:flex" aria-label="Primary">
+        <a href="#destinations" class="nav-link transition-colors duration-300 hover:text-ink">Destinations</a>
+        <a href="#itinerary" class="nav-link transition-colors duration-300 hover:text-ink">Guides</a>
+        <a href="#stays" class="nav-link transition-colors duration-300 hover:text-ink">Stays</a>
+        <a href="#journal" class="nav-link transition-colors duration-300 hover:text-ink">Journal</a>
+      </nav>
+
+      <div class="flex items-center gap-2 sm:gap-3">
+        <a href="#search"
+           class="hidden items-center gap-2 bg-ink px-5 py-2.5 text-[10px] font-medium uppercase tracking-[0.22em] text-paper transition-colors duration-300 hover:bg-clay sm:inline-flex">
+          Explore Maps
+          <i data-lucide="arrow-up-right" class="h-3 w-3"></i>
+        </a>
+
+        <button id="menuBtn" type="button" aria-label="Toggle navigation" aria-expanded="false"
+                class="inline-flex h-9 w-9 items-center justify-center border border-line-strong text-ink transition-colors duration-300 hover:border-clay hover:text-clay md:hidden">
+          <span id="iconMenu"><i data-lucide="menu" class="h-4 w-4"></i></span>
+          <span id="iconClose" class="hidden"><i data-lucide="x" class="h-4 w-4"></i></span>
+        </button>
+      </div>
+    </div>
+
+    <div id="mobileMenu" class="md:hidden">
+      <div class="overflow-hidden">
+        <nav class="mt-2 border border-line bg-surface p-2 shadow-sm" aria-label="Mobile">
+          <a href="#destinations" class="block border-b border-line px-4 py-3.5 text-[10px] uppercase tracking-[0.22em] text-muted transition-colors hover:text-ink">Destinations</a>
+          <a href="#itinerary" class="block border-b border-line px-4 py-3.5 text-[10px] uppercase tracking-[0.22em] text-muted transition-colors hover:text-ink">Guides</a>
+          <a href="#stays" class="block border-b border-line px-4 py-3.5 text-[10px] uppercase tracking-[0.22em] text-muted transition-colors hover:text-ink">Stays</a>
+          <a href="#journal" class="block border-b border-line px-4 py-3.5 text-[10px] uppercase tracking-[0.22em] text-muted transition-colors hover:text-ink">Journal</a>
+          <a href="#search" class="mt-2 flex items-center justify-center gap-2 bg-ink px-4 py-3.5 text-[10px] font-medium uppercase tracking-[0.22em] text-paper">
+            Explore Maps
+            <i data-lucide="arrow-up-right" class="h-3 w-3"></i>
+          </a>
+        </nav>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- ══════════════════════════════════════════ HERO ══════════════════════════════════════════ -->
+  <section class="relative overflow-hidden pt-28 sm:pt-32">
+
+    <div class="pointer-events-none absolute inset-0 grid-bg opacity-70 [mask-image:radial-gradient(ellipse_at_50%_0%,black,transparent_72%)]"></div>
+    <div class="pointer-events-none absolute -top-40 right-[-10%] h-[520px] w-[520px] rounded-full bg-clay/[0.07] blur-[120px]"></div>
+
+    <div class="relative mx-auto max-w-[1400px] px-4 sm:px-6">
+
+      <!-- Meta row -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4 text-[9px] uppercase tracking-[0.3em] text-muted">
+        <span class="flex items-center gap-2.5">
+          <span class="relative flex h-1.5 w-1.5">
+            <span class="absolute inline-flex h-full w-full animate-ping bg-signal opacity-70"></span>
+            <span class="relative inline-flex h-1.5 w-1.5 bg-signal"></span>
+          </span>
+          Now booking · Spring 2026
+        </span>
+        <span class="hidden sm:block">Issue 04 — The Quiet Places</span>
+        <span class="hidden md:block">Est. 2014 · 42 Countries</span>
+      </div>
+
+      <!-- Headline -->
+      <div class="mt-8 grid items-end gap-10 lg:grid-cols-12 lg:gap-12">
+
+        <div class="lg:col-span-8">
+          <h1 class="font-serif text-[clamp(2.6rem,7.7vw,7rem)] leading-[0.88] tracking-[-0.035em] text-ink">
+            <span class="block overflow-hidden pb-[0.06em]">
+              <span class="hero-word" style="animation-delay:.05s">Travel slowly,</span>
+            </span>
+            <span class="block overflow-hidden pb-[0.06em]">
+              <span class="hero-word italic text-clay" style="animation-delay:.18s">see everything.</span>
+            </span>
+          </h1>
+
+          <div class="hero-word mt-8 flex flex-wrap items-center gap-3" style="animation-delay:.34s">
+            <a href="#search"
+               class="group inline-flex items-center gap-2.5 bg-ink px-7 py-4 text-[10px] font-medium uppercase tracking-[0.25em] text-paper transition-colors duration-300 hover:bg-clay">
+              Find your route
+              <i data-lucide="arrow-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"></i>
+            </a>
+            <a href="#itinerary"
+               class="group inline-flex items-center gap-2.5 border border-line-strong px-7 py-4 text-[10px] font-medium uppercase tracking-[0.25em] text-ink transition-colors duration-300 hover:border-clay hover:text-clay">
+              <i data-lucide="play" class="h-3 w-3"></i>
+              Watch the film
+            </a>
+          </div>
+        </div>
+
+        <div class="lg:col-span-4">
+          <div class="flex items-start gap-6">
+            <div class="flex-1">
+              <p class="text-[15px] leading-relaxed text-muted">
+                An atelier for the unhurried. We map the places worth the long way round —
+                and the people who keep them quiet.
+              </p>
+              <div class="mt-5 flex items-center gap-3 border-t border-line pt-4 text-[9px] uppercase tracking-[0.28em] text-muted">
+                <span class="h-px w-8 bg-clay"></span>
+                <span>Scroll to begin</span>
+              </div>
+            </div>
+
+            <!-- Rotating badge -->
+            <div class="relative hidden h-24 w-24 shrink-0 sm:block">
+              <svg viewBox="0 0 100 100" class="spin-slow h-full w-full" aria-hidden="true">
+                <defs>
+                  <path id="badgeCircle" d="M 50,50 m -38,0 a 38,38 0 1,1 76,0 a 38,38 0 1,1 -76,0" />
+                </defs>
+                <text fill="#8a847d" style="font-family:Inter,sans-serif;font-size:7px;letter-spacing:2.4px;text-transform:uppercase;">
+                  <textPath href="#badgeCircle">SLOW TRAVEL · ISSUE 04 · EST. 2014 ·</textPath>
+                </text>
+              </svg>
+              <span class="absolute inset-0 flex items-center justify-center">
+                <i data-lucide="compass" class="h-5 w-5 text-clay"></i>
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Image strip -->
+      <div data-parallax class="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+
+        <figure class="img-frame relative aspect-[3/4] overflow-hidden border border-line">
+          <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=440&q=52"
+               alt="Snow-covered peaks in Lofoten, Norway" width="440" height="586"
+               fetchpriority="high" decoding="async"
+               data-speed="10" class="img-parallax h-full w-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent"></div>
+          <figcaption class="absolute bottom-3 left-3 right-3">
+            <span class="block text-[9px] uppercase tracking-[0.28em] text-white/70">Norway</span>
+            <span class="mt-1 block font-serif text-lg leading-none text-white">Lofoten</span>
+          </figcaption>
+        </figure>
+
+        <figure class="img-frame relative aspect-[3/4] overflow-hidden border border-line">
+          <img src="https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?auto=format&fit=crop&w=440&q=52"
+               alt="Traditional temple architecture in Kyoto, Japan" width="440" height="586"
+               decoding="async" data-speed="18"
+               class="img-parallax h-full w-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent"></div>
+          <figcaption class="absolute bottom-3 left-3 right-3">
+            <span class="block text-[9px] uppercase tracking-[0.28em] text-white/70">Japan</span>
+            <span class="mt-1 block font-serif text-lg leading-none text-white">Kyoto</span>
+          </figcaption>
+        </figure>
+
+        <figure class="img-frame relative aspect-[3/4] overflow-hidden border border-line">
+          <img src="https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&w=440&q=52"
+               alt="Sand dunes in the Sahara, Morocco" width="440" height="586"
+               loading="lazy" decoding="async" data-speed="26"
+               class="img-parallax h-full w-full object-cover">
+          <div class="absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/10 to-transparent"></div>
+          <figcaption class="absolute bottom-3 left-3 right-3">
+            <span class="block text-[9px] uppercase tracking-[0.28em] text-white/70">Morocco</span>
+            <span class="mt-1 block font-serif text-lg leading-none text-white">Sahara</span>
+          </figcaption>
+        </figure>
+
+        <!-- Live counters -->
+        <div class="col-span-2 flex flex-col justify-between border border-line bg-surface p-5 lg:col-span-1">
+          <div class="flex items-center justify-between">
+            <span class="text-[9px] uppercase tracking-[0.28em] text-clay">In the atlas</span>
+            <i data-lucide="layers" class="h-4 w-4 text-clay"></i>
+          </div>
+
+          <div class="mt-6 space-y-4">
+            <div>
+              <div class="font-serif text-3xl leading-none text-ink">
+                <span data-count="42">0</span><span class="text-clay">+</span>
+              </div>
+              <div class="mt-1 text-[9px] uppercase tracking-[0.28em] text-muted">Destinations mapped</div>
+            </div>
+            <div class="h-px bg-line"></div>
+            <div>
+              <div class="font-serif text-3xl leading-none text-ink"><span data-count="118">0</span></div>
+              <div class="mt-1 text-[9px] uppercase tracking-[0.28em] text-muted">Field essays</div>
+            </div>
+          </div>
+
+          <a href="#destinations"
+             class="group mt-6 inline-flex items-center justify-between border-t border-line pt-4 text-[9px] uppercase tracking-[0.28em] text-ink transition-colors hover:text-clay">
+            Open the atlas
+            <i data-lucide="arrow-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1"></i>
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Marquee -->
+    <div class="marquee relative mt-12 overflow-hidden border-y border-line py-4">
+      <div class="marquee-track flex w-max">
+        <div class="flex items-center gap-8 pr-8">
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Lofoten</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Kyoto</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Sahara</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Amalfi</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Venice</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Patagonia</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Hokkaido</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Atacama</span><span class="text-clay">✳</span>
+        </div>
+        <div class="flex items-center gap-8 pr-8" aria-hidden="true">
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Lofoten</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Kyoto</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Sahara</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Amalfi</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Venice</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Patagonia</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Hokkaido</span><span class="text-clay">✳</span>
+          <span class="text-[10px] uppercase tracking-[0.32em] text-muted">Atacama</span><span class="text-clay">✳</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════════════════════════ SEARCH BAND ══════════════════════════════════════ -->
+  <section id="search" class="border-b border-line bg-surface">
+    <div class="mx-auto max-w-[1400px] px-4 py-8 sm:px-6 sm:py-10">
+      <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-10">
+
+        <div class="shrink-0 lg:w-52">
+          <span class="text-[9px] uppercase tracking-[0.32em] text-clay">Find your route</span>
+          <p class="mt-2 text-[13px] leading-snug text-muted">Three fields. One good week.</p>
+        </div>
+
+        <form id="filterForm" class="flex-1 border border-line-strong">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]">
+
+            <div class="group relative border-b border-line px-5 py-4 transition-colors duration-300 focus-within:bg-paper sm:border-b-0 sm:border-r">
+              <label for="f-dest" class="block text-[9px] uppercase tracking-[0.28em] text-muted transition-colors duration-300 group-focus-within:text-clay">Destination</label>
+              <div class="relative mt-1.5">
+                <select id="f-dest" class="w-full cursor-pointer pr-6 text-sm font-medium text-ink">
+                  <option value="Anywhere">Anywhere</option>
+                  <option value="Nordic &amp; Arctic">Nordic &amp; Arctic</option>
+                  <option value="Mediterranean">Mediterranean</option>
+                  <option value="East Asia">East Asia</option>
+                  <option value="North Africa">North Africa</option>
+                </select>
+                <i data-lucide="chevron-down" class="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint"></i>
+              </div>
+              <span class="pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-clay transition-transform duration-500 ease-out group-focus-within:scale-x-100"></span>
+            </div>
+
+            <div class="group relative border-b border-line px-5 py-4 transition-colors duration-300 focus-within:bg-paper sm:border-b-0 lg:border-r">
+              <label for="f-date" class="block text-[9px] uppercase tracking-[0.28em] text-muted transition-colors duration-300 group-focus-within:text-clay">Date</label>
+              <div class="relative mt-1.5">
+                <select id="f-date" class="w-full cursor-pointer pr-6 text-sm font-medium text-ink">
+                  <option value="Any week">Any week</option>
+                  <option value="March — May">March — May</option>
+                  <option value="June — August">June — August</option>
+                  <option value="September — November">September — November</option>
+                </select>
+                <i data-lucide="chevron-down" class="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint"></i>
+              </div>
+              <span class="pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-clay transition-transform duration-500 ease-out group-focus-within:scale-x-100"></span>
+            </div>
+
+            <div class="group relative border-b border-line px-5 py-4 transition-colors duration-300 focus-within:bg-paper sm:border-b-0 sm:border-r lg:border-r-0">
+              <label for="f-vibe" class="block text-[9px] uppercase tracking-[0.28em] text-muted transition-colors duration-300 group-focus-within:text-clay">Vibe</label>
+              <div class="relative mt-1.5">
+                <select id="f-vibe" class="w-full cursor-pointer pr-6 text-sm font-medium text-ink">
+                  <option value="Any vibe">Any vibe</option>
+                  <option value="Off-grid">Off-grid</option>
+                  <option value="Coastal">Coastal</option>
+                  <option value="Culinary">Culinary</option>
+                  <option value="Architectural">Architectural</option>
+                </select>
+                <i data-lucide="chevron-down" class="pointer-events-none absolute right-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-faint"></i>
+              </div>
+              <span class="pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-clay transition-transform duration-500 ease-out group-focus-within:scale-x-100"></span>
+            </div>
+
+            <button type="submit"
+                    class="flex items-center justify-center gap-2.5 bg-ink px-8 py-4 text-[10px] font-medium uppercase tracking-[0.25em] text-paper transition-colors duration-300 hover:bg-clay">
+              <i data-lucide="search" class="h-3.5 w-3.5"></i>
+              <span>Search</span>
+            </button>
+
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════ MANIFESTO ═══════════════════════════════════════ -->
+  <section class="relative border-b border-line">
+    <div class="mx-auto max-w-[1400px] px-4 py-20 sm:px-6 sm:py-28">
+
+      <div class="grid gap-10 lg:grid-cols-12 lg:gap-12">
+
+        <div class="reveal lg:col-span-3">
+          <span class="text-[9px] uppercase tracking-[0.32em] text-clay">Manifesto</span>
+          <p class="mt-3 text-[13px] leading-relaxed text-muted">No. 04 — on why we go, and why we go slowly.</p>
+        </div>
+
+        <div class="lg:col-span-9">
+          <p class="reveal font-serif text-[clamp(1.55rem,3.2vw,2.9rem)] leading-[1.16] tracking-[-0.01em] text-ink">
+            We believe the best journeys are <span class="italic text-clay">unhurried, unremarkable to anyone else</span>,
+            and entirely your own — a long lunch, a wrong turn, a town with one bakery and no reason to leave.
+          </p>
+
+          <div class="reveal mt-12 grid gap-8 border-t border-line pt-8 sm:grid-cols-3" style="transition-delay:.1s">
+            <div>
+              <div class="font-serif text-sm italic text-clay">01</div>
+              <h3 class="mt-3 font-serif text-xl text-ink">Fewer places, longer stays</h3>
+              <p class="mt-2 text-[13px] leading-relaxed text-muted">Three nights minimum, always. You cannot know a place from a coach window.</p>
+            </div>
+            <div>
+              <div class="font-serif text-sm italic text-clay">02</div>
+              <h3 class="mt-3 font-serif text-xl text-ink">The long way is the route</h3>
+              <p class="mt-2 text-[13px] leading-relaxed text-muted">Ferries over flights. Ridgelines over highways. The transit is the trip.</p>
+            </div>
+            <div>
+              <div class="font-serif text-sm italic text-clay">03</div>
+              <h3 class="mt-3 font-serif text-xl text-ink">Leave it quieter</h3>
+              <p class="mt-2 text-[13px] leading-relaxed text-muted">We work with 40 hosts, not 4,000. Small groups, local kitchens, no coaches.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════ DESTINATIONS ══════════════════════════════════════ -->
+  <section id="destinations" class="relative">
+    <div class="mx-auto max-w-[1400px] px-4 py-20 sm:px-6 sm:py-28">
+
+      <div class="reveal flex flex-col gap-6 border-b border-line pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span class="text-[9px] uppercase tracking-[0.32em] text-clay">01 — Destinations</span>
+          <h2 class="mt-4 font-serif text-4xl leading-[1.05] text-ink sm:text-5xl lg:text-6xl">Curated,<br class="sm:hidden"> not crowded.</h2>
+        </div>
+        <p class="max-w-xs text-[14px] leading-relaxed text-muted sm:text-right">
+          Five places we return to every year. No queues, no guides holding flags — just the coordinates and a good bed.
+        </p>
+      </div>
+
+      <div class="mt-8 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-12">
+
+        <!-- Card 1 -->
+        <article class="reveal group relative overflow-hidden border border-line bg-surface lg:col-span-7">
+          <a href="#" class="block">
+            <div class="img-frame relative h-[420px] overflow-hidden sm:h-[500px] lg:h-[600px]">
+              <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=760&q=58"
+                   alt="Snow-covered peaks in Lofoten, Norway" width="760" height="950"
+                   loading="lazy" decoding="async"
+                   class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.06]">
+              <div class="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/45 to-ink/25"></div>
+
+              <div class="absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-5">
+                <span class="border border-white/30 bg-ink/50 px-2.5 py-1 text-[9px] uppercase tracking-[0.28em] text-white backdrop-blur-sm">Off-grid</span>
+                <span class="font-serif text-base text-white">$1,840<span class="ml-1 text-[9px] uppercase tracking-[0.22em] text-white/70">/ 6 nights</span></span>
+              </div>
+
+              <div class="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+                <div class="flex items-center gap-3 text-[9px] uppercase tracking-[0.28em] text-white/75">
+                  <span>Norway</span><span class="h-px w-6 bg-white/30"></span><span>68°N 13°E</span>
+                </div>
+                <h3 class="mt-2.5 font-serif text-3xl leading-none text-white transition-colors duration-500 group-hover:text-clay sm:text-4xl">Lofoten</h3>
+                <p class="mt-3 max-w-xs text-[13px] leading-relaxed text-white/80">Black granite, white water, and a sky that refuses to be ordinary.</p>
+                <div class="mt-4 flex translate-y-1 items-center gap-2 text-[9px] uppercase tracking-[0.28em] text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                  View itinerary <i data-lucide="arrow-right" class="h-3 w-3"></i>
+                </div>
+              </div>
+
+              <span class="pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-clay transition-transform duration-700 ease-out group-hover:scale-x-100"></span>
+            </div>
+          </a>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="reveal group relative overflow-hidden border border-line bg-surface lg:col-span-5" style="transition-delay:.08s">
+          <a href="#" class="block">
+            <div class="img-frame relative h-[420px] overflow-hidden sm:h-[500px] lg:h-[600px]">
+              <img src="https://images.unsplash.com/photo-1526481280693-3bfa7568e0f3?auto=format&fit=crop&w=640&q=58"
+                   alt="Traditional temple architecture in Kyoto, Japan" width="640" height="900"
+                   loading="lazy" decoding="async"
+                   class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.06]">
+              <div class="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/45 to-ink/25"></div>
+
+              <div class="absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-5">
+                <span class="border border-white/30 bg-ink/50 px-2.5 py-1 text-[9px] uppercase tracking-[0.28em] text-white backdrop-blur-sm">Architectural</span>
+                <span class="font-serif text-base text-white">$1,410<span class="ml-1 text-[9px] uppercase tracking-[0.22em] text-white/70">/ 5 nights</span></span>
+              </div>
+
+              <div class="absolute inset-x-0 bottom-0 p-5 sm:p-6">
+                <div class="flex items-center gap-3 text-[9px] uppercase tracking-[0.28em] text-white/75">
+                  <span>Japan</span><span class="h-px w-6 bg-white/30"></span><span>35°N 135°E</span>
+                </div>
+                <h3 class="mt-2.5 font-serif text-3xl leading-none text-white transition-colors duration-500 group-hover:text-clay sm:text-4xl">Kyoto</h3>
+                <p class="mt-3 max-w-xs text-[13px] leading-relaxed text-white/80">Fourteen temples, one tea house, and a city that rewards walking.</p>
+                <div class="mt-4 flex translate-y-1 items-center gap-2 text-[9px] uppercase tracking-[0.28em] text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                  View itinerary <i data-lucide="arrow-right" class="h-3 w-3"></i>
+                </div>
+              </div>
+
+              <span class="pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-clay transition-transform duration-700 ease-out group-hover:scale-x-100"></span>
+            </div>
+          </a>
+        </article>
+
+        <!-- Card 3 -->
+        <article class="reveal group relative overflow-hidden border border-line bg-surface lg:col-span-4">
+          <a href="#" class="block">
+            <div class="img-frame relative h-[380px] overflow-hidden sm:h-[420px] lg:h-[440px]">
+              <img src="https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&w=520&q=58"
+                   alt="Sand dunes in the Sahara, Morocco" width="520" height="620"
+                   loading="lazy" decoding="async"
+                   class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.06]">
+              <div class="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/45 to-ink/25"></div>
+
+              <div class="absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-5">
+                <span class="border border-white/30 bg-ink/50 px-2.5 py-1 text-[9px] uppercase tracking-[0.28em] text-white backdrop-blur-sm">Desert</span>
+                <span class="font-serif text-base text-white">$1,260<span class="ml-1 text-[9px] uppercase tracking-[0.22em] text-white/70">/ 7 nights</span></span>
+              </div>
+
+              <div class="absolute inset-x-0 bottom-0 p-5">
+                <div class="flex items-center gap-3 text-[9px] uppercase tracking-[0.28em] text-white/75">
+                  <span>Morocco</span><span class="h-px w-6 bg-white/30"></span><span>31°N 4°W</span>
+                </div>
+                <h3 class="mt-2.5 font-serif text-2xl leading-none text-white transition-colors duration-500 group-hover:text-clay sm:text-3xl">Sahara</h3>
+                <p class="mt-3 max-w-xs text-[13px] leading-relaxed text-white/80">Dunes that move a metre a year, and a sky with no light pollution.</p>
+                <div class="mt-4 flex translate-y-1 items-center gap-2 text-[9px] uppercase tracking-[0.28em] text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                  View itinerary <i data-lucide="arrow-right" class="h-3 w-3"></i>
+                </div>
+              </div>
+
+              <span class="pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-clay transition-transform duration-700 ease-out group-hover:scale-x-100"></span>
+            </div>
+          </a>
+        </article>
+
+        <!-- Card 4 -->
+        <article class="reveal group relative overflow-hidden border border-line bg-surface lg:col-span-4" style="transition-delay:.08s">
+          <a href="#" class="block">
+            <div class="img-frame relative h-[380px] overflow-hidden sm:h-[420px] lg:h-[440px]">
+              <img src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=520&q=58"
+                   alt="Canal in Venice, Italy" width="520" height="620"
+                   loading="lazy" decoding="async"
+                   class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.06]">
+              <div class="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/45 to-ink/25"></div>
+
+              <div class="absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-5">
+                <span class="border border-white/30 bg-ink/50 px-2.5 py-1 text-[9px] uppercase tracking-[0.28em] text-white backdrop-blur-sm">Waterborne</span>
+                <span class="font-serif text-base text-white">$980<span class="ml-1 text-[9px] uppercase tracking-[0.22em] text-white/70">/ 3 nights</span></span>
+              </div>
+
+              <div class="absolute inset-x-0 bottom-0 p-5">
+                <div class="flex items-center gap-3 text-[9px] uppercase tracking-[0.28em] text-white/75">
+                  <span>Italy</span><span class="h-px w-6 bg-white/30"></span><span>45°N 12°E</span>
+                </div>
+                <h3 class="mt-2.5 font-serif text-2xl leading-none text-white transition-colors duration-500 group-hover:text-clay sm:text-3xl">Venice</h3>
+                <p class="mt-3 max-w-xs text-[13px] leading-relaxed text-white/80">The city at 6am, before the crowds and the heat arrive.</p>
+                <div class="mt-4 flex translate-y-1 items-center gap-2 text-[9px] uppercase tracking-[0.28em] text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                  View itinerary <i data-lucide="arrow-right" class="h-3 w-3"></i>
+                </div>
+              </div>
+
+              <span class="pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-clay transition-transform duration-700 ease-out group-hover:scale-x-100"></span>
+            </div>
+          </a>
+        </article>
+
+        <!-- Card 5 -->
+        <article class="reveal group relative overflow-hidden border border-line bg-surface lg:col-span-4" style="transition-delay:.16s">
+          <a href="#" class="block">
+            <div class="img-frame relative h-[380px] overflow-hidden sm:h-[420px] lg:h-[440px]">
+              <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=520&q=58"
+                   alt="Turquoise water along the Amalfi Coast, Italy" width="520" height="620"
+                   loading="lazy" decoding="async"
+                   class="absolute inset-0 h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-[1.06]">
+              <div class="absolute inset-0 bg-gradient-to-t from-ink/95 via-ink/45 to-ink/25"></div>
+
+              <div class="absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-5">
+                <span class="border border-white/30 bg-ink/50 px-2.5 py-1 text-[9px] uppercase tracking-[0.28em] text-white backdrop-blur-sm">Coastal</span>
+                <span class="font-serif text-base text-white">$1,320<span class="ml-1 text-[9px] uppercase tracking-[0.22em] text-white/70">/ 5 nights</span></span>
+              </div>
+
+              <div class="absolute inset-x-0 bottom-0 p-5">
+                <div class="flex items-center gap-3 text-[9px] uppercase tracking-[0.28em] text-white/75">
+                  <span>Italy</span><span class="h-px w-6 bg-white/30"></span><span>40°N 14°E</span>
+                </div>
+                <h3 class="mt-2.5 font-serif text-2xl leading-none text-white transition-colors duration-500 group-hover:text-clay sm:text-3xl">Amalfi</h3>
+                <p class="mt-3 max-w-xs text-[13px] leading-relaxed text-white/80">Cliffside villages, lemon groves, and a very slow ferry.</p>
+                <div class="mt-4 flex translate-y-1 items-center gap-2 text-[9px] uppercase tracking-[0.28em] text-white opacity-0 transition-all duration-500 group-hover:translate-y-0 group-hover:opacity-100">
+                  View itinerary <i data-lucide="arrow-right" class="h-3 w-3"></i>
+                </div>
+              </div>
+
+              <span class="pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 bg-clay transition-transform duration-700 ease-out group-hover:scale-x-100"></span>
+            </div>
+          </a>
+        </article>
+
+      </div>
+
+      <div class="reveal mt-10 flex justify-center">
+        <a href="#" class="group inline-flex items-center gap-3 border border-line-strong px-7 py-4 text-[10px] uppercase tracking-[0.28em] text-muted transition-colors duration-300 hover:border-clay hover:text-ink">
+          Browse all 42 destinations
+          <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"></i>
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════ STAYS ═══════════════════════════════════════════ -->
+  <section id="stays" class="relative border-t border-line bg-surface">
+    <div class="mx-auto max-w-[1400px] px-4 py-20 sm:px-6 sm:py-28">
+
+      <div class="reveal flex flex-col gap-6 border-b border-line pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span class="text-[9px] uppercase tracking-[0.32em] text-clay">02 — Stays</span>
+          <h2 class="mt-4 font-serif text-4xl leading-[1.05] text-ink sm:text-5xl lg:text-6xl">Places to<br class="sm:hidden"> sleep well.</h2>
+        </div>
+        <p class="max-w-xs text-[14px] leading-relaxed text-muted sm:text-right">
+          Twelve rooms, three cabins, one lighthouse. Every host we list, we have slept in ourselves.
+        </p>
+      </div>
+
+      <div class="mt-10 border-t border-line">
+
+        <a href="#" class="reveal group grid grid-cols-[auto_1fr] items-center gap-4 border-b border-line py-5 sm:grid-cols-[84px_1fr_auto_auto] sm:gap-8">
+          <div class="img-frame h-16 w-16 overflow-hidden border border-line sm:h-[84px] sm:w-[84px]">
+            <img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=180&q=52"
+                 alt="Minimalist cabin interior" width="180" height="180"
+                 loading="lazy" decoding="async"
+                 class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110">
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-3 text-[9px] uppercase tracking-[0.28em] text-muted">
+              <span>Norway</span><span class="h-px w-4 bg-line-strong"></span><span>6 rooms</span>
+            </div>
+            <h3 class="mt-1.5 font-serif text-xl leading-tight text-ink transition-colors duration-300 group-hover:text-clay sm:text-2xl">Rorbu No. 9</h3>
+            <p class="mt-1 truncate text-[13px] text-muted">A fisherman's cabin on stilts, rebuilt around one very good chair.</p>
+          </div>
+          <div class="hidden text-right sm:block">
+            <div class="text-[9px] uppercase tracking-[0.28em] text-muted">From</div>
+            <div class="mt-1 font-serif text-lg text-ink">$220<span class="text-[10px] text-muted">/night</span></div>
+          </div>
+          <div class="hidden h-9 w-9 items-center justify-center border border-line transition-colors duration-300 group-hover:border-clay group-hover:text-clay sm:flex">
+            <i data-lucide="arrow-up-right" class="h-3.5 w-3.5"></i>
+          </div>
+        </a>
+
+        <a href="#" class="reveal group grid grid-cols-[auto_1fr] items-center gap-4 border-b border-line py-5 sm:grid-cols-[84px_1fr_auto_auto] sm:gap-8" style="transition-delay:.06s">
+          <div class="img-frame h-16 w-16 overflow-hidden border border-line sm:h-[84px] sm:w-[84px]">
+            <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=180&q=52"
+                 alt="Quiet guesthouse bedroom" width="180" height="180"
+                 loading="lazy" decoding="async"
+                 class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110">
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-3 text-[9px] uppercase tracking-[0.28em] text-muted">
+              <span>Japan</span><span class="h-px w-4 bg-line-strong"></span><span>4 rooms</span>
+            </div>
+            <h3 class="mt-1.5 font-serif text-xl leading-tight text-ink transition-colors duration-300 group-hover:text-clay sm:text-2xl">Machiya Kiku</h3>
+            <p class="mt-1 truncate text-[13px] text-muted">A 90-year-old townhouse with a courtyard, a bath, and no television.</p>
+          </div>
+          <div class="hidden text-right sm:block">
+            <div class="text-[9px] uppercase tracking-[0.28em] text-muted">From</div>
+            <div class="mt-1 font-serif text-lg text-ink">$180<span class="text-[10px] text-muted">/night</span></div>
+          </div>
+          <div class="hidden h-9 w-9 items-center justify-center border border-line transition-colors duration-300 group-hover:border-clay group-hover:text-clay sm:flex">
+            <i data-lucide="arrow-up-right" class="h-3.5 w-3.5"></i>
+          </div>
+        </a>
+
+        <a href="#" class="reveal group grid grid-cols-[auto_1fr] items-center gap-4 border-b border-line py-5 sm:grid-cols-[84px_1fr_auto_auto] sm:gap-8" style="transition-delay:.12s">
+          <div class="img-frame h-16 w-16 overflow-hidden border border-line sm:h-[84px] sm:w-[84px]">
+            <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=180&q=52"
+                 alt="Coastal hotel terrace" width="180" height="180"
+                 loading="lazy" decoding="async"
+                 class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110">
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-3 text-[9px] uppercase tracking-[0.28em] text-muted">
+              <span>Italy</span><span class="h-px w-4 bg-line-strong"></span><span>9 rooms</span>
+            </div>
+            <h3 class="mt-1.5 font-serif text-xl leading-tight text-ink transition-colors duration-300 group-hover:text-clay sm:text-2xl">Casa Limone</h3>
+            <p class="mt-1 truncate text-[13px] text-muted">Lemon groves, a stone terrace, and a ferry that stops twice a day.</p>
+          </div>
+          <div class="hidden text-right sm:block">
+            <div class="text-[9px] uppercase tracking-[0.28em] text-muted">From</div>
+            <div class="mt-1 font-serif text-lg text-ink">$260<span class="text-[10px] text-muted">/night</span></div>
+          </div>
+          <div class="hidden h-9 w-9 items-center justify-center border border-line transition-colors duration-300 group-hover:border-clay group-hover:text-clay sm:flex">
+            <i data-lucide="arrow-up-right" class="h-3.5 w-3.5"></i>
+          </div>
+        </a>
+
+        <a href="#" class="reveal group grid grid-cols-[auto_1fr] items-center gap-4 border-b border-line py-5 sm:grid-cols-[84px_1fr_auto_auto] sm:gap-8" style="transition-delay:.18s">
+          <div class="img-frame h-16 w-16 overflow-hidden border border-line sm:h-[84px] sm:w-[84px]">
+            <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=180&q=52"
+                 alt="Desert camp bedroom" width="180" height="180"
+                 loading="lazy" decoding="async"
+                 class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110">
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-3 text-[9px] uppercase tracking-[0.28em] text-muted">
+              <span>Morocco</span><span class="h-px w-4 bg-line-strong"></span><span>5 tents</span>
+            </div>
+            <h3 class="mt-1.5 font-serif text-xl leading-tight text-ink transition-colors duration-300 group-hover:text-clay sm:text-2xl">Camp Erg Chigaga</h3>
+            <p class="mt-1 truncate text-[13px] text-muted">Canvas, cold water, and a horizon that goes on far too long.</p>
+          </div>
+          <div class="hidden text-right sm:block">
+            <div class="text-[9px] uppercase tracking-[0.28em] text-muted">From</div>
+            <div class="mt-1 font-serif text-lg text-ink">$340<span class="text-[10px] text-muted">/night</span></div>
+          </div>
+          <div class="hidden h-9 w-9 items-center justify-center border border-line transition-colors duration-300 group-hover:border-clay group-hover:text-clay sm:flex">
+            <i data-lucide="arrow-up-right" class="h-3.5 w-3.5"></i>
+          </div>
+        </a>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════ ITINERARY ═════════════════════════════════════════ -->
+  <section id="itinerary" class="relative border-t border-line">
+    <div class="mx-auto max-w-[1400px] px-4 py-20 sm:px-6 sm:py-28">
+
+      <div class="reveal flex flex-col gap-6 border-b border-line pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span class="text-[9px] uppercase tracking-[0.32em] text-clay">03 — Featured Itinerary</span>
+          <h2 class="mt-4 font-serif text-4xl leading-[1.05] text-ink sm:text-5xl lg:text-6xl">Days, planned loosely.</h2>
+        </div>
+        <p class="max-w-xs text-[14px] leading-relaxed text-muted sm:text-right">
+          Three routes, drawn by people who actually walked them. Open a day to read the details.
+        </p>
+      </div>
+
+      <div class="reveal mt-10 grid grid-cols-1 border border-line-strong sm:grid-cols-3" role="tablist" aria-label="Travel styles">
+        <button type="button" role="tab" aria-selected="true" data-tab="solo"
+                class="tab-btn is-active flex items-baseline gap-3 border-b border-line px-6 py-5 text-left text-[10px] uppercase tracking-[0.25em] last:border-b-0 sm:border-b-0 sm:border-r">
+          <span class="font-serif text-[11px] italic opacity-60">01</span> Solo Expedition
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-tab="arch"
+                class="tab-btn flex items-baseline gap-3 border-b border-line px-6 py-5 text-left text-[10px] uppercase tracking-[0.25em] last:border-b-0 sm:border-b-0 sm:border-r">
+          <span class="font-serif text-[11px] italic opacity-60">02</span> Architectural Tour
+        </button>
+        <button type="button" role="tab" aria-selected="false" data-tab="food"
+                class="tab-btn flex items-baseline gap-3 px-6 py-5 text-left text-[10px] uppercase tracking-[0.25em]">
+          <span class="font-serif text-[11px] italic opacity-60">03</span> Culinary
+        </button>
+      </div>
+
+      <div id="panel" class="mt-10 transition-[opacity,transform] duration-300 ease-out"></div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════ PROCESS ══════════════════════════════════════════ -->
+  <section id="process" class="relative border-t border-line bg-surface">
+    <div class="mx-auto max-w-[1400px] px-4 py-20 sm:px-6 sm:py-28">
+
+      <div class="reveal flex flex-col gap-6 border-b border-line pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span class="text-[9px] uppercase tracking-[0.32em] text-clay">04 — How it works</span>
+          <h2 class="mt-4 font-serif text-4xl leading-[1.05] text-ink sm:text-5xl lg:text-6xl">Four steps,<br class="sm:hidden"> no forms.</h2>
+        </div>
+        <p class="max-w-xs text-[14px] leading-relaxed text-muted sm:text-right">
+          No booking engine, no upsells. A person reads what you write and writes back.
+        </p>
+      </div>
+
+      <div class="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+
+        <div class="reveal border-t border-line-strong pt-5">
+          <div class="font-serif text-sm italic text-clay">01</div>
+          <h3 class="mt-3 font-serif text-xl leading-snug text-ink">We listen</h3>
+          <p class="mt-2 text-[13px] leading-relaxed text-muted">A twenty-minute call about how you actually travel — not a checklist of countries you want to tick.</p>
+        </div>
+
+        <div class="reveal border-t border-line-strong pt-5" style="transition-delay:.06s">
+          <div class="font-serif text-sm italic text-clay">02</div>
+          <h3 class="mt-3 font-serif text-xl leading-snug text-ink">We draw the route</h3>
+          <p class="mt-2 text-[13px] leading-relaxed text-muted">Three days later you receive a route on paper: maps, ferries, the name of a bakery, and one backup plan.</p>
+        </div>
+
+        <div class="reveal border-t border-line-strong pt-5" style="transition-delay:.12s">
+          <div class="font-serif text-sm italic text-clay">03</div>
+          <h3 class="mt-3 font-serif text-xl leading-snug text-ink">We book the quiet parts</h3>
+          <p class="mt-2 text-[13px] leading-relaxed text-muted">Rooms, tables, and the one guide worth paying for. Everything else is left deliberately open.</p>
+        </div>
+
+        <div class="reveal border-t border-line-strong pt-5" style="transition-delay:.18s">
+          <div class="font-serif text-sm italic text-clay">04</div>
+          <h3 class="mt-3 font-serif text-xl leading-snug text-ink">We stay on call</h3>
+          <p class="mt-2 text-[13px] leading-relaxed text-muted">One number, answered by a human, for the whole trip. Mostly for weather. Occasionally for dinner.</p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═════════════════════════════════════ TESTIMONIALS ═══════════════════════════════════════ -->
+  <section id="voices" class="relative border-t border-line">
+    <div class="mx-auto max-w-[1400px] px-4 py-20 sm:px-6 sm:py-28">
+
+      <div class="reveal flex flex-col gap-6 border-b border-line pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span class="text-[9px] uppercase tracking-[0.32em] text-clay">05 — Voices</span>
+          <h2 class="mt-4 font-serif text-4xl leading-[1.05] text-ink sm:text-5xl lg:text-6xl">Back, and<br class="sm:hidden"> changed slightly.</h2>
+        </div>
+        <p class="max-w-xs text-[14px] leading-relaxed text-muted sm:text-right">
+          What people say after eleven days of very little schedule.
+        </p>
+      </div>
+
+      <div class="mt-10 grid gap-10 md:grid-cols-2 md:gap-16">
+
+        <blockquote class="reveal border-l-2 border-clay pl-6">
+          <p class="font-serif text-xl leading-[1.4] text-ink sm:text-2xl">
+            “They sent us to a village with one bakery and no taxi rank. It was the best week of my life, and I have thought about it every day since.”
+          </p>
+          <footer class="mt-6 flex items-center gap-3">
+            <span class="flex h-10 w-10 items-center justify-center bg-ink text-[10px] font-medium tracking-wider text-paper">MR</span>
+            <span>
+              <span class="block text-sm font-medium text-ink">Mara Reinholt</span>
+              <span class="mt-0.5 block text-[9px] uppercase tracking-[0.28em] text-muted">Lofoten · Solo, 2024</span>
+            </span>
+          </footer>
+        </blockquote>
+
+        <blockquote class="reveal border-l-2 border-clay pl-6" style="transition-delay:.1s">
+          <p class="font-serif text-xl leading-[1.4] text-ink sm:text-2xl">
+            “I asked for ‘nothing famous’ and they delivered fourteen buildings nobody has heard of. I have never taken so many photographs of doorways.”
+          </p>
+          <footer class="mt-6 flex items-center gap-3">
+            <span class="flex h-10 w-10 items-center justify-center bg-ink text-[10px] font-medium tracking-wider text-paper">JT</span>
+            <span>
+              <span class="block text-sm font-medium text-ink">Jonas Tellier</span>
+              <span class="mt-0.5 block text-[9px] uppercase tracking-[0.28em] text-muted">Kyoto · Architectural, 2025</span>
+            </span>
+          </footer>
+        </blockquote>
+
+      </div>
+
+      <div class="reveal mt-14 grid grid-cols-2 gap-6 border-t border-line pt-8 sm:grid-cols-4">
+        <div>
+          <div class="font-serif text-3xl leading-none text-ink">96<span class="text-clay">%</span></div>
+          <div class="mt-2 text-[9px] uppercase tracking-[0.28em] text-muted">Book again</div>
+        </div>
+        <div>
+          <div class="font-serif text-3xl leading-none text-ink">11</div>
+          <div class="mt-2 text-[9px] uppercase tracking-[0.28em] text-muted">Years running</div>
+        </div>
+        <div>
+          <div class="font-serif text-3xl leading-none text-ink">40</div>
+          <div class="mt-2 text-[9px] uppercase tracking-[0.28em] text-muted">Local hosts</div>
+        </div>
+        <div>
+          <div class="font-serif text-3xl leading-none text-ink">0</div>
+          <div class="mt-2 text-[9px] uppercase tracking-[0.28em] text-muted">Coach tours</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════ JOURNAL ═════════════════════════════════════════ -->
+  <section id="journal" class="relative border-t border-line">
+    <div class="mx-auto max-w-[1400px] px-4 py-20 sm:px-6 sm:py-28">
+
+      <div class="reveal flex flex-col gap-6 border-b border-line pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <span class="text-[9px] uppercase tracking-[0.32em] text-clay">06 — Journal</span>
+          <h2 class="mt-4 font-serif text-4xl leading-[1.05] text-ink sm:text-5xl lg:text-6xl">Long reads for<br class="hidden sm:block"> long journeys.</h2>
+        </div>
+        <a href="#" class="group inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-muted transition-colors duration-300 hover:text-ink">
+          All essays
+          <i data-lucide="arrow-up-right" class="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"></i>
+        </a>
+      </div>
+
+      <div class="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
+
+        <article class="reveal group">
+          <a href="#" class="block">
+            <div class="img-frame relative aspect-[4/3] overflow-hidden border border-line">
+              <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=520&q=58"
+                   alt="A quiet lake beneath mountains" width="520" height="390"
+                   loading="lazy" decoding="async"
+                   class="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105">
+            </div>
+            <div class="mt-5 flex items-center gap-3 text-[9px] uppercase tracking-[0.28em] text-muted">
+              <span class="text-clay">Field Notes</span>
+              <span class="h-px w-5 bg-line-strong"></span>
+              <span>8 min read</span>
+            </div>
+            <h3 class="mt-3 font-serif text-2xl leading-snug text-ink transition-colors duration-500 group-hover:text-clay">
+              The Art of Getting Lost on Purpose
+            </h3>
+            <p class="mt-3 text-[14px] leading-relaxed text-muted">
+              Why the best days of a trip are the ones with no plan at all — and how to build a day that can fall apart gracefully.
+            </p>
+            <span class="mt-5 inline-block border-b border-line-strong pb-1 text-[9px] uppercase tracking-[0.28em] text-muted transition-colors duration-500 group-hover:border-clay group-hover:text-ink">
+              Read the essay
+            </span>
+          </a>
+        </article>
+
+        <article class="reveal group" style="transition-delay:.08s">
+          <a href="#" class="block">
+            <div class="img-frame relative aspect-[4/3] overflow-hidden border border-line">
+              <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=520&q=58"
+                   alt="A minimal guesthouse interior" width="520" height="390"
+                   loading="lazy" decoding="async"
+                   class="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105">
+            </div>
+            <div class="mt-5 flex items-center gap-3 text-[9px] uppercase tracking-[0.28em] text-muted">
+              <span class="text-clay">Stays</span>
+              <span class="h-px w-5 bg-line-strong"></span>
+              <span>6 min read</span>
+            </div>
+            <h3 class="mt-3 font-serif text-2xl leading-snug text-ink transition-colors duration-500 group-hover:text-clay">
+              A Room With No View, On Purpose
+            </h3>
+            <p class="mt-3 text-[14px] leading-relaxed text-muted">
+              In praise of the guesthouse with one window, a very good chair, and absolutely nothing to look at.
+            </p>
+            <span class="mt-5 inline-block border-b border-line-strong pb-1 text-[9px] uppercase tracking-[0.28em] text-muted transition-colors duration-500 group-hover:border-clay group-hover:text-ink">
+              Read the essay
+            </span>
+          </a>
+        </article>
+
+        <article class="reveal group sm:col-span-2 lg:col-span-1" style="transition-delay:.16s">
+          <a href="#" class="block">
+            <div class="img-frame relative aspect-[4/3] overflow-hidden border border-line">
+              <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=520&q=58"
+                   alt="A narrow street in Japan at dusk" width="520" height="390"
+                   loading="lazy" decoding="async"
+                   class="h-full w-full object-cover transition-transform duration-[1200ms] ease-out group-hover:scale-105">
+            </div>
+            <div class="mt-5 flex items-center gap-3 text-[9px] uppercase tracking-[0.28em] text-muted">
+              <span class="text-clay">Culinary</span>
+              <span class="h-px w-5 bg-line-strong"></span>
+              <span>11 min read</span>
+            </div>
+            <h3 class="mt-3 font-serif text-2xl leading-snug text-ink transition-colors duration-500 group-hover:text-clay">
+              Eating Alone in Osaka
+            </h3>
+            <p class="mt-3 text-[14px] leading-relaxed text-muted">
+              Twelve counter seats, one bowl of noodles, and a short lesson in the pleasures of solitude.
+            </p>
+            <span class="mt-5 inline-block border-b border-line-strong pb-1 text-[9px] uppercase tracking-[0.28em] text-muted transition-colors duration-500 group-hover:border-clay group-hover:text-ink">
+              Read the essay
+            </span>
+          </a>
+        </article>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════════════════════ NEWSLETTER ═══════════════════════════════════════ -->
+  <section id="newsletter" class="relative bg-ink text-paper">
+    <div class="mx-auto max-w-[1400px] px-4 py-20 sm:px-6 sm:py-28">
+
+      <div class="grid gap-12 lg:grid-cols-12 lg:items-end">
+
+        <div class="reveal lg:col-span-7">
+          <span class="flex items-center gap-2.5 text-[9px] uppercase tracking-[0.32em] text-signal">
+            <span class="h-1.5 w-1.5 bg-signal"></span>
+            Field Notes
+          </span>
+          <h2 class="mt-4 font-serif text-[clamp(2.4rem,5.5vw,4.5rem)] leading-[1.02] tracking-[-0.02em] text-paper">
+            One letter,<br>
+            <span class="italic text-paper/50">once a month.</span>
+          </h2>
+          <p class="mt-6 max-w-md text-[14px] leading-relaxed text-paper/60">
+            No sales, no countdowns, no “last chance”. Just a new place, a photograph, and something worth reading on a long train.
+          </p>
+        </div>
+
+        <div class="reveal lg:col-span-5" style="transition-delay:.1s">
+          <form id="newsletterForm" class="border border-paper/20 p-1.5">
+            <div class="flex flex-col gap-1.5 sm:flex-row">
+              <label for="nl-email" class="sr-only">Email address</label>
+              <input id="nl-email" type="email" required placeholder="you@somewhere.com"
+                     class="flex-1 bg-transparent px-4 py-3.5 text-sm text-paper placeholder:text-paper/35 focus:outline-none focus-visible:ring-1 focus-visible:ring-signal">
+              <button type="submit"
+                      class="group flex items-center justify-center gap-2 bg-paper px-6 py-3.5 text-[10px] font-medium uppercase tracking-[0.25em] text-ink transition-colors duration-300 hover:bg-clay hover:text-paper">
+                Subscribe
+                <i data-lucide="arrow-right" class="h-3 w-3 transition-transform duration-300 group-hover:translate-x-1"></i>
+              </button>
+            </div>
+          </form>
+          <p class="mt-3 text-[10px] uppercase tracking-[0.22em] text-paper/35">4,200 readers · unsubscribe anytime</p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- ══════════════════════════════════════════ FOOTER ══════════════════════════════════════════ -->
+<footer class="border-t border-line bg-surface">
+  <div class="mx-auto max-w-[1400px] px-4 py-12 sm:px-6">
+
+    <div class="flex flex-col gap-10 md:flex-row md:items-center md:justify-between">
+
+      <a href="#top" class="flex items-center gap-2.5">
+        <span class="block h-2.5 w-2.5 bg-signal"></span>
+        <span class="font-serif text-lg tracking-tight text-ink">Meridian<span class="text-clay">.</span></span>
+        <span class="ml-2 hidden text-[9px] uppercase tracking-[0.28em] text-muted sm:inline">Travel Atelier</span>
+      </a>
+
+      <nav class="flex flex-wrap gap-x-8 gap-y-3 text-[10px] uppercase tracking-[0.22em] text-muted" aria-label="Footer">
+        <a href="#destinations" class="transition-colors duration-300 hover:text-ink">Destinations</a>
+        <a href="#itinerary" class="transition-colors duration-300 hover:text-ink">Guides</a>
+        <a href="#stays" class="transition-colors duration-300 hover:text-ink">Stays</a>
+        <a href="#journal" class="transition-colors duration-300 hover:text-ink">Journal</a>
+        <a href="#newsletter" class="transition-colors duration-300 hover:text-ink">Newsletter</a>
+      </nav>
+
+      <div class="flex flex-wrap items-center gap-6">
+        <button type="button" id="langBtn"
+                class="flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-muted transition-colors duration-300 hover:text-ink">
+          <i data-lucide="globe" class="h-3.5 w-3.5"></i>
+          EN / EUR
+        </button>
+        <div class="flex items-center gap-5 text-[10px] uppercase tracking-[0.22em] text-muted">
+          <a href="#" class="transition-colors duration-300 hover:text-ink">Instagram</a>
+          <a href="#" class="transition-colors duration-300 hover:text-ink">Are.na</a>
+          <a href="#" class="transition-colors duration-300 hover:text-ink">Substack</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="mt-10 flex flex-col gap-3 border-t border-line pt-6 text-[10px] uppercase tracking-[0.22em] text-muted sm:flex-row sm:items-center sm:justify-between">
+      <p>© 2025 Meridian Travel Atelier. All rights reserved.</p>
+      <p>Made for the slow ones.</p>
+    </div>
+
+  </div>
+</footer>
+
+<!-- Toast -->
+<div class="pointer-events-none fixed inset-x-0 bottom-6 z-[80] flex justify-center px-4">
+  <div id="toast">
+    <div class="flex items-center gap-3 border border-line bg-ink px-5 py-3 shadow-xl">
+      <span class="h-1.5 w-1.5 shrink-0 bg-signal"></span>
+      <span id="toastMsg" class="text-[10px] uppercase tracking-[0.22em] text-paper">Ready</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ─────────────────────────── DATA ─────────────────────────── */
+  const ITINERARIES = {
+    solo: {
+      title: 'The Quiet North',
+      blurb: 'Six days walking the outer fjords, alone but rarely lonely. Ferries, ridgelines, and the occasional fisherman who wants to talk about weather.',
+      image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=520&q=52',
+      stats: [['Duration', '6 days'], ['Distance', '82 km'], ['Season', 'Jun — Sep'], ['Grade', 'Moderate']],
+      days: [
+        { d: '01', title: 'Arrival at Reine', meta: 'Bodø → Reine · 2h ferry', body: 'Land in Bodø by midday and catch the afternoon crossing over Vestfjorden. Check into a converted rorbu — a fisherman\'s cabin on stilts — then walk the shoreline until the light finally gives up, somewhere around midnight.' },
+        { d: '02', title: 'Ridgeline to Reinebringen', meta: '6 km · 480 m ascent', body: 'A short, brutal, entirely worthwhile climb. Nearly two thousand stone steps cut into the mountainside deliver you above the village. Descend before the afternoon cloud arrives and eat an unwise number of cinnamon buns.' },
+        { d: '03', title: 'Ferry to Vindstad', meta: 'Boat · 45 min', body: 'A morning crossing to a village of nine residents. Walk the empty beach at Bunes, where the sand is white and the water is emphatically not warm. Bring layers. Bring more layers.' },
+        { d: '04', title: 'The long walk to Kvalvika', meta: '12 km · coastal path', body: 'Over the pass and down into a bay that has never had a road. There is nothing here but grass, surf, and the kind of silence that takes an hour to get used to. Sit for longer than you planned.' },
+        { d: '05', title: 'Weather day', meta: 'Flexible · no fixed plan', body: 'The north decides its own schedule. If the wind is up, stay in. Read. Write. Learn to enjoy doing almost nothing in a place this beautiful.' },
+        { d: '06', title: 'Return to Bodø', meta: 'Ferry · evening', body: 'One last crossing, one last coffee in the harbour, one last look back at the islands. The ferry timetable is not negotiable; your reluctance is.' }
+      ]
+    },
+    arch: {
+      title: 'Concrete & Light',
+      blurb: 'Five days tracing the bones of a city — brutalist churches, hidden courtyards, and buildings that only make sense at dusk.',
+      image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=520&q=52',
+      stats: [['Duration', '5 days'], ['Sites', '14'], ['Season', 'Apr — Oct'], ['Grade', 'Easy']],
+      days: [
+        { d: '01', title: 'Arrival & the evening walk', meta: '3 km · self-guided', body: 'Drop your bag and go straight out. The first walk is always the best one — no map, no agenda, just the city introducing itself at its own pace.' },
+        { d: '02', title: 'The modernist quarter', meta: 'Guided · 4h', body: 'Six buildings, four of them residential, none of them famous. This is the architecture that people actually live inside, which is the only kind that matters.' },
+        { d: '03', title: 'Sacred spaces', meta: '5 sites · 3h', body: 'A morning of concrete churches and the strange, generous light they let in through slots you would not expect. Bring a notebook; the acoustics are worth writing about.' },
+        { d: '04', title: 'Afternoon light', meta: 'Free · dusk', body: 'Return to the two buildings you liked most at exactly 6pm, when the sun is low enough to explain them. Everything is a different building at dusk.' },
+        { d: '05', title: 'Departure', meta: 'Morning · flexible', body: 'A final coffee in the courtyard you found on day one, and a slow walk to the station. Nothing rushed. That was the point.' }
+      ]
+    },
+    food: {
+      title: 'Salt, Smoke & Citrus',
+      blurb: 'Four days of markets, fire, and eating things you cannot pronounce. Bring an appetite and loose trousers.',
+      image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=520&q=52',
+      stats: [['Duration', '4 days'], ['Tastings', '11'], ['Season', 'Year-round'], ['Grade', 'Gentle']],
+      days: [
+        { d: '01', title: 'Market morning', meta: '6am start · 3h', body: 'Arrive before the tourists and after the chefs. The best stalls sell out by nine, and the vendor who likes you will hand you something you did not order.' },
+        { d: '02', title: 'The fire kitchen', meta: 'Afternoon · 4h', body: 'A cooking session with a family who have run the same grill for three generations. You will learn two techniques and forget one of them immediately. That is fine.' },
+        { d: '03', title: 'Coastal route', meta: 'Day trip · 90 km', body: 'Drive the coast road stopping at every shack that looks like it might be somebody\'s grandmother\'s kitchen. The rule: if there is no menu, order everything.' },
+        { d: '04', title: 'Citrus & farewell', meta: 'Morning · 2h', body: 'A final breakfast of bitter oranges, good bread, and very strong coffee. Buy a jar of something to take home. You will not open it for a year.' }
+      ]
+    }
+  };
+
+  /* ─────────────────────── ICONS ─────────────────────── */
+  function refreshIcons() {
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
+  }
+  refreshIcons();
+
+  /* ─────────────── IMAGE FALLBACK (global) ─────────────── */
+  document.addEventListener('error', function (e) {
+    const t = e.target;
+    if (t && t.tagName === 'IMG') {
+      t.style.opacity = '0';
+      if (t.parentElement) t.parentElement.classList.add('img-fallback');
+    }
+  }, true);
+
+  /* ─────────────────── HEADER SCROLL ─────────────────── */
+  const onScroll = function () {
+    document.body.classList.toggle('scrolled', window.scrollY > 20);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ─────────────────── MOBILE MENU ─────────────────── */
+  const menuBtn = document.getElementById('menuBtn');
+  const mobileMenu = document.getElementById('mobileMenu');
+  const iconMenu = document.getElementById('iconMenu');
+  const iconClose = document.getElementById('iconClose');
+
+  function closeMenu() {
+    mobileMenu.classList.remove('open');
+    menuBtn.setAttribute('aria-expanded', 'false');
+    iconMenu.classList.remove('hidden');
+    iconClose.classList.add('hidden');
+  }
+
+  menuBtn.addEventListener('click', function () {
+    const open = mobileMenu.classList.toggle('open');
+    menuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    iconMenu.classList.toggle('hidden', open);
+    iconClose.classList.toggle('hidden', !open);
+  });
+
+  mobileMenu.querySelectorAll('a').forEach(function (a) {
+    a.addEventListener('click', closeMenu);
+  });
+
+  /* ─────────────────── SCROLL REVEAL ─────────────────── */
+  const revealEls = Array.prototype.slice.call(document.querySelectorAll('.reveal'));
+
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+    revealEls.forEach(function (el) { io.observe(el); });
+  } else {
+    revealEls.forEach(function (el) { el.classList.add('is-in'); });
+  }
+
+  /* ─────────────────── COUNTERS ─────────────────── */
+  const counters = Array.prototype.slice.call(document.querySelectorAll('[data-count]'));
+
+  function animateCount(el) {
+    const target = parseInt(el.getAttribute('data-count'), 10) || 0;
+    if (REDUCED) { el.textContent = String(target); return; }
+    const duration = 1500;
+    const start = performance.now();
+    function step(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = String(Math.round(target * eased));
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  if ('IntersectionObserver' in window) {
+    const co = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          animateCount(entry.target);
+          co.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.6 });
+    counters.forEach(function (el) { co.observe(el); });
+  } else {
+    counters.forEach(function (el) { el.textContent = el.getAttribute('data-count'); });
+  }
+
+  /* ─────────────────── HERO PARALLAX ─────────────────── */
+  const parallaxWrap = document.querySelector('[data-parallax]');
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  if (parallaxWrap && finePointer && !REDUCED) {
+    const layers = Array.prototype.slice.call(parallaxWrap.querySelectorAll('[data-speed]'));
+
+    parallaxWrap.addEventListener('mousemove', function (e) {
+      const r = parallaxWrap.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5;
+      const y = (e.clientY - r.top) / r.height - 0.5;
+
+      layers.forEach(function (layer) {
+        const speed = parseFloat(layer.getAttribute('data-speed')) || 10;
+        const tx = (-x * speed).toFixed(2);
+        const ty = (-y * speed).toFixed(2);
+        layer.style.transform = 'translate3d(' + tx + 'px,' + ty + 'px,0) scale(1.08)';
+      });
+    });
+
+    parallaxWrap.addEventListener('mouseleave', function () {
+      layers.forEach(function (layer) {
+        layer.style.transform = 'translate3d(0,0,0) scale(1.06)';
+      });
+    });
+  }
+
+  /* ─────────────────────── TOAST ─────────────────────── */
+  const toastEl = document.getElementById('toast');
+  const toastMsg = document.getElementById('toastMsg');
+  let toastTimer = null;
+
+  function toast(message) {
+    toastMsg.textContent = message;
+    toastEl.classList.add('show');
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(function () {
+      toastEl.classList.remove('show');
+    }, 2800);
+  }
+
+  /* ─────────────────── FORMS ─────────────────── */
+  const filterForm = document.getElementById('filterForm');
+  filterForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const dest = document.getElementById('f-dest').value;
+    const date = document.getElementById('f-date').value;
+    const vibe = document.getElementById('f-vibe').value;
+    toast(dest + ' · ' + date + ' · ' + vibe);
+  });
+
+  const newsletterForm = document.getElementById('newsletterForm');
+  newsletterForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const input = document.getElementById('nl-email');
+    if (!input.value.trim()) return;
+    toast('Subscribed — first letter on the 1st');
+    newsletterForm.reset();
+  });
+
+  document.getElementById('langBtn').addEventListener('click', function () {
+    toast('Language & currency — coming soon');
+  });
+
+  /* ─────────────────── ITINERARY ENGINE ─────────────────── */
+  const panel = document.getElementById('panel');
+  const tabButtons = Array.prototype.slice.call(document.querySelectorAll('.tab-btn'));
+
+  function dayHTML(day, index) {
+    return '' +
+      '<div class="day border-b border-line' + (index === 0 ? ' open' : '') + '">' +
+        '<button type="button" data-day class="group flex w-full items-start gap-4 py-5 text-left sm:gap-6">' +
+          '<span class="mt-0.5 w-6 shrink-0 font-serif text-sm italic text-clay">' + day.d + '</span>' +
+          '<span class="flex-1">' +
+            '<span class="block text-[15px] font-medium text-ink transition-colors duration-300 group-hover:text-clay">' + day.title + '</span>' +
+            '<span class="mt-1 block text-[9px] uppercase tracking-[0.28em] text-muted">' + day.meta + '</span>' +
+          '</span>' +
+          '<i data-lucide="plus" class="chev mt-1 h-4 w-4 shrink-0 text-faint"></i>' +
+        '</button>' +
+        '<div class="day-body">' +
+          '<div class="overflow-hidden">' +
+            '<p class="pb-6 pl-10 pr-2 text-[14px] leading-relaxed text-muted sm:pl-12 sm:pr-10">' + day.body + '</p>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function renderItinerary(key) {
+    const data = ITINERARIES[key];
+    if (!data) return '';
+
+    const statsHTML = data.stats.map(function (pair) {
+      return '' +
+        '<div class="border-b border-r border-line px-4 py-3">' +
+          '<dt class="text-[9px] uppercase tracking-[0.22em] text-muted">' + pair[0] + '</dt>' +
+          '<dd class="mt-1 text-sm font-medium text-ink">' + pair[1] + '</dd>' +
+        '</div>';
+    }).join('');
+
+    const daysHTML = data.days.map(dayHTML).join('');
+
+    return '' +
+      '<div class="grid gap-10 lg:grid-cols-12 lg:gap-12">' +
+
+        '<aside class="lg:col-span-4">' +
+          '<div class="img-frame relative h-56 w-full overflow-hidden border border-line">' +
+            '<img src="' + data.image + '" alt="' + data.title + '" width="520" height="320" loading="lazy" decoding="async" class="h-full w-full object-cover">' +
+            '<div class="absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent"></div>' +
+            '<span class="absolute bottom-4 left-4 border border-white/30 bg-ink/45 px-2.5 py-1 text-[9px] uppercase tracking-[0.28em] text-white backdrop-blur-sm">Meridian Route</span>' +
+          '</div>' +
+          '<h3 class="mt-6 font-serif text-3xl leading-tight text-ink">' + data.title + '</h3>' +
+          '<p class="mt-3 text-[14px] leading-relaxed text-muted">' + data.blurb + '</p>' +
+          '<dl class="mt-6 grid grid-cols-2 border-l border-t border-line">' + statsHTML + '</dl>' +
+          '<a href="#" class="mt-6 inline-flex items-center gap-2 border border-line-strong px-5 py-3 text-[9px] uppercase tracking-[0.28em] text-muted transition-colors duration-300 hover:border-clay hover:text-ink">' +
+            'Download the route' +
+            '<i data-lucide="arrow-up-right" class="h-3 w-3"></i>' +
+          '</a>' +
+        '</aside>' +
+
+        '<div class="lg:col-span-8">' +
+          '<div class="border-t border-line">' + daysHTML + '</div>' +
+        '</div>' +
+
+      '</div>';
+  }
+
+  panel.addEventListener('click', function (e) {
+    const trigger = e.target.closest('[data-day]');
+    if (!trigger) return;
+    const day = trigger.parentElement;
+    if (!day) return;
+    day.classList.toggle('open');
+  });
+
+  panel.innerHTML = renderItinerary('solo');
+  refreshIcons();
+
+  tabButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (btn.classList.contains('is-active')) return;
+
+      tabButtons.forEach(function (b) {
+        b.classList.remove('is-active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('is-active');
+      btn.setAttribute('aria-selected', 'true');
+
+      const key = btn.getAttribute('data-tab');
+
+      panel.style.opacity = '0';
+      panel.style.transform = 'translateY(10px)';
+
+      window.setTimeout(function () {
+        panel.innerHTML = renderItinerary(key);
+        refreshIcons();
+        requestAnimationFrame(function () {
+          panel.style.opacity = '1';
+          panel.style.transform = 'translateY(0)';
+        });
+      }, 180);
+    });
+  });
+
+})();
+</script>
+
+</body>
+</html>
